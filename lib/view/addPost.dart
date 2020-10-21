@@ -4,60 +4,6 @@ import 'package:Runbhumi/widget/widgets.dart';
 import 'package:flutter/material.dart';
 
 String userId = Constants.prefs.getString('userId');
-/*    
-locations = <String>[
-      "Andhra Pradesh",
-      "Arunachal Pradesh",
-      "Assam",
-      "Bihar",
-      "Chhattisgarh",
-      "Goa",
-      "Gujarat",
-      "Haryana",
-      "Himachal Pradesh",
-      "Jammu and Kashmir",
-      "Jharkhand",
-      "Karnataka",
-      "Kerala",
-      "Madhya Pradesh",
-      "Maharashtra",
-      "Manipur",
-      "Meghalaya",
-      "Mizoram",
-      "Nagaland",
-      "Odisha",
-      "Punjab",
-      "Rajasthan",
-      "Sikkim",
-      "Tamil Nadu",
-      "Telangana",
-      "Tripura",
-      "Uttarakhand",
-      "Uttar Pradesh",
-      "West Bengal",
-      "Andaman and Nicobar Islands",
-      "Chandigarh",
-      "Dadra and Nagar Haveli",
-      "Daman and Diu",
-      "Delhi",
-      "Lakshadweep",
-      "Puducherry"
-      */
-
-Widget _buildTitle(BuildContext context) {
-  return Container(
-    width: MediaQuery.of(context).size.width,
-    child: Center(
-      child: const Text(
-        'Add Post',
-        style: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 25,
-        ),
-      ),
-    ),
-  );
-}
 
 class AddPost extends StatefulWidget {
   @override
@@ -130,81 +76,92 @@ class _AddPostState extends State<AddPost> {
           headerSliverBuilder: addPostSliverAppBar,
           body: SingleChildScrollView(
             child: Center(
-              child: Form(
-                key: _addpostkey,
-                child: Column(
-                  children: [
-                    InputBox(
-                        controller: _nameController, hintText: "Event name"),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        width: MediaQuery.of(context).size.width / 1.2,
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        decoration: BoxDecoration(
-                          borderRadius: new BorderRadius.circular(50),
-                          border: Border.all(),
+              child: Column(
+                children: [
+                  Form(
+                    key: _addpostkey,
+                    child: Column(
+                      children: [
+                        InputBox(
+                            controller: _nameController,
+                            hintText: "Event name"),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width / 1.2,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            decoration: BoxDecoration(
+                              borderRadius: new BorderRadius.circular(50),
+                              border: Border.all(),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: sportsList,
+                            ),
+                          ),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: sportsList,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width / 1.2,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            decoration: BoxDecoration(
+                              borderRadius: new BorderRadius.circular(50),
+                              border: Border.all(),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: purposeList,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        width: MediaQuery.of(context).size.width / 1.2,
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        decoration: BoxDecoration(
-                          borderRadius: new BorderRadius.circular(50),
-                          border: Border.all(),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: DateTimePicker(
+                            controller: _datetime,
+                          ),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: purposeList,
+                        InputBox(
+                          controller: _locationController,
+                          hintText: "Location",
                         ),
-                      ),
+                        // Button(
+                        //   myText: "Invite Friends",
+                        //   myColor: Theme.of(context).accentColor,
+                        //   onPressed: () {},
+                        // ),removed for MVP
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DateTimePicker(
-                        controller: _datetime,
-                      ),
-                    ),
-                    InputBox(
-                      controller: _locationController,
-                      hintText: "Location",
-                    ),
-                    // Button(
-                    //   myText: "Invite Friends",
-                    //   myColor: Theme.of(context).accentColor,
-                    //   onPressed: () {},
-                    // ),removed for MVP
-                    Button(
-                      myText: "Add Post",
-                      myColor: Theme.of(context).primaryColor,
-                      onPressed: () {
-                        createNewEvent(
-                            _nameController.text,
-                            userId,
-                            _locationController.text,
-                            _chosenSport,
-                            _chosenPurpose,
-                            [userId],
-                            DateTime.parse(_datetime.text));
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return successDialog(context);
-                            });
-                        _nameController.clear();
-                        _datetime.clear();
-                        _addpostkey.currentState.reset();
-                        // Navigator.pushNamed(context, "/home");
-                      }, //FirebaseFirestore.instance.collection('events').add(
-                      //Events.newEvent((doc.id,userId,,"","","","",[userId],"").toJson());
-                    ),
-                  ],
-                ),
+                  ),
+                  Button(
+                    myText: "Add Post",
+                    myColor: Theme.of(context).primaryColor,
+                    onPressed: () {
+                      // this funtion writes in the DB and adds an
+                      // event when manually testing anything,
+                      // just comment this function
+                      createNewEvent(
+                          _nameController.text,
+                          userId,
+                          _locationController.text,
+                          _chosenSport,
+                          _chosenPurpose,
+                          [userId],
+                          DateTime.parse(_datetime.text));
+                      // to show success dialog
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          //wait for 3 sec
+                          Future.delayed(Duration(seconds: 3), () {
+                            Navigator.pushNamed(context, "/mainapp");
+                          });
+                          return successDialog(context);
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),
@@ -222,7 +179,7 @@ class _AddPostState extends State<AddPost> {
         Center(
             child: Text("Post added",
                 style: Theme.of(context).textTheme.headline4)),
-        Image.asset("assets/confirmation-illustration.png")
+        Image.asset("assets/confirmation-illustration.png"),
       ],
     );
   }
@@ -232,13 +189,14 @@ class _AddPostState extends State<AddPost> {
     return <Widget>[
       SliverAppBar(
         expandedHeight: 250.0,
+        leading: BackButton(),
         elevation: 0,
         floating: false,
         pinned: true,
         flexibleSpace: FlexibleSpaceBar(
           centerTitle: true,
           title: Container(
-              child: _buildTitle(context),
+              child: buildTitle(context, "Add Post"),
               color: Theme.of(context).canvasColor.withOpacity(0.5)),
           background: Image(
             height: 200,
@@ -249,5 +207,3 @@ class _AddPostState extends State<AddPost> {
     ];
   }
 }
-
-//TODO: make this is a location input

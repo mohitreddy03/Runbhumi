@@ -24,7 +24,7 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     Firebase.initializeApp().whenComplete(() {
-      print("completed");
+      print("firebase initialized");
       setState(() {});
     });
     _searchQuery = new TextEditingController();
@@ -39,6 +39,7 @@ class _HomeState extends State<Home> {
       children: [
         Center(
             child: Text("You Have been added",
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headline4)),
         Image.asset("assets/confirmation-illustration.png")
       ],
@@ -49,7 +50,8 @@ class _HomeState extends State<Home> {
     EventService().getCurrentFeed().then((snapshots) {
       setState(() {
         currentFeed = snapshots;
-        print("we got the data + ${currentFeed.toString()} ");
+        // print("we got the data + ${currentFeed.toString()} ");
+        print("we got the data for UserInfoEvents");
       });
     });
   }
@@ -83,22 +85,6 @@ class _HomeState extends State<Home> {
       _searchQuery.clear();
       updateSearchQuery("");
     });
-  }
-
-  Widget _buildTitle(BuildContext context) {
-    return new Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: new Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'My Feed',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 25),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildSearchField() {
@@ -151,7 +137,7 @@ class _HomeState extends State<Home> {
     return StreamBuilder(
       stream: currentFeed,
       builder: (context, asyncSnapshot) {
-        print("Working");
+        print("Feed loading");
         return asyncSnapshot.hasData
             ? ListView.builder(
                 itemCount: asyncSnapshot.data.documents.length,
@@ -271,26 +257,6 @@ class _HomeState extends State<Home> {
                                       .get('dateTime')
                                       .toDate())
                                   .toString()),
-                              // trailing: asyncSnapshot.data.documents[index]
-                              //             .get('description') ==
-                              //         "Looking for players in our team"
-                              //     ? GestureDetector(
-                              //         onTap: () {
-                              //           //notification to be sent to the person who posted
-                              //         },
-                              //         child: Container(
-                              //           child: Text("Join"),
-                              //         ),
-                              //       )
-                              //     : GestureDetector(
-                              //         onTap: () {},
-                              //         child: Container(
-                              //           child: Text("Accept"),
-                              //         ),
-                              //       ),
-                              // trailing: Text(asyncSnapshot.data.documents[index]
-                              //     .get('dateTime').toString()
-                              // ),
                             ),
                           ),
                         ],
@@ -311,7 +277,8 @@ class _HomeState extends State<Home> {
       appBar: new AppBar(
         automaticallyImplyLeading: false,
         leading: _isSearching ? BackButton() : null,
-        title: _isSearching ? _buildSearchField() : _buildTitle(context),
+        title:
+            _isSearching ? _buildSearchField() : buildTitle(context, "My Feed"),
         actions: _buildActions(),
         /*bottom: new TabBar(
             indicatorSize: TabBarIndicatorSize.tab,
@@ -327,7 +294,7 @@ class _HomeState extends State<Home> {
               indicatorColor: Theme.of(context).primaryColor,
               tabBarIndicatorSize: TabBarIndicatorSize.tab,
             ),
-          ),*/
+          ),Removed for MVP*/
       ),
       body: Container(
         child: Column(
@@ -344,11 +311,24 @@ class _HomeState extends State<Home> {
             ),
             Expanded(
               child: Stack(
-                children: <Widget>[feed(theme: theme)],
+                children: <Widget>[
+                  feed(theme: theme),
+                ],
               ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, "/addpost");
+        },
+        child: Icon(Icons.add),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
   }

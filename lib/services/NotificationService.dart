@@ -2,7 +2,7 @@
 // import 'package:Runbhumi/models/Notification.dart';
 
 // class FriendRequest {
-//   // this request will create a friend request
+//  this request will create a friend request
 
 //   Future<void> createFriendRequest(String senderId, String recieverId) async {
 //     try {
@@ -76,7 +76,7 @@
 //     }
 //   }
 
-//   // Logic for rejecting a friend Request
+//    Logic for rejecting a friend Request
 
 //   Future<void> rejectFriendRequest(String notificationId) async {
 //     try {
@@ -95,7 +95,7 @@
 //     }
 //   }
 
-// //Logic For removing a friend
+// Logic For removing a friend
 
 //   Future<void> removeFriend(String notificationId) async {
 //     try {} catch (e) {
@@ -103,3 +103,61 @@
 //     }
 //   }
 // }
+
+import 'package:Runbhumi/models/Friends.dart';
+import 'package:Runbhumi/models/Notification.dart';
+import 'package:Runbhumi/services/UserServices.dart';
+import 'package:Runbhumi/utils/Constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class NotificationServices {
+  final String _id = Constants.prefs.getString('userId');
+  final String _name = Constants.prefs.getString('name');
+  final String _profileImage = Constants.prefs.getString('profileImage');
+
+  createRequest(String friendId) {
+    var db = FirebaseFirestore.instance
+        .collection('users')
+        .doc(friendId)
+        .collection('notification');
+    var doc = db.doc();
+    String id = doc.id;
+    doc.set(NotificationClass.createNewRequest(
+            "friend", id, _id, _name, _profileImage)
+        .toJson());
+  }
+
+  declineRequest(String id) {
+    var db = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_id)
+        .collection('notification');
+    db.doc(id).delete();
+  }
+
+  acceptFriendRequest(NotificationClass data) {
+    // String notificationID, String id, String name, String profileImage) {
+    var db = FirebaseFirestore.instance.collection('users');
+    db.doc(_id).collection('friends').doc(data.senderId).set(Friends.newFriend(
+            data.senderId, data.senderName, data.senderProfieImage)
+        .toJson());
+    db
+        .doc(data.senderId)
+        .collection('friends')
+        .doc(_id)
+        .set(Friends.newFriend(_id, _name, _profileImage).toJson());
+    declineRequest(data.notificationId);
+
+    UserService().updateMyFriendCount();
+    UserService().updateFriendCount(data.senderId);
+  }
+
+  getNotification() async {
+    print(_id);
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(_id)
+        .collection('notification')
+        .snapshots();
+  }
+}

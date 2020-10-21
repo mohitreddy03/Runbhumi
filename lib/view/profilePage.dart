@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:Runbhumi/services/UserServices.dart';
 import 'package:Runbhumi/utils/Constants.dart';
 import 'package:Runbhumi/view/otherUserProfile.dart';
@@ -18,21 +17,6 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   AnimationController animationController;
-  Widget _buildTitle(BuildContext context) {
-    return new Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: new Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'Profile',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 25),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   void initState() {
@@ -54,17 +38,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   //distance for profile to move right when the drawer is opened
   //variables for drawer animations
   static const double maxSlide = 250.0;
-  static const double minDragStartEdge = 60;
-  static const double maxDragStartEdge = maxSlide - 16;
-  bool _canBeDragged = false;
-
-  //TODO: connect this with real firestore data
-  final List teamsList = [
-    "Chennai superKings",
-    "Rajasthan Royals",
-    "Delhi dare devils",
-    "Manchester united"
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +69,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: _buildTitle(context),
+          title: buildTitle(context, "Profile"),
           centerTitle: true,
           elevation: 0,
           leading: Builder(
@@ -114,8 +87,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
             unselectedLabelColor: Colors.grey,
             tabs: [
               Tab(child: Text("Profile")),
-              Tab(child: Text("Teams")),
               Tab(child: Text("Friends")),
+              Tab(child: Text("Schedule")),
             ],
             indicator: new BubbleTabIndicator(
               indicatorHeight: 30.0,
@@ -124,13 +97,10 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
             ),
           ),
         ),
-        body: ProfileBody(teamsList: teamsList),
+        body: ProfileBody(),
       ),
     );
     return GestureDetector(
-      onHorizontalDragStart: _onDragStart,
-      onHorizontalDragUpdate: _onDragUpdate,
-      onHorizontalDragEnd: _onDragEnd,
       child: AnimatedBuilder(
         animation: animationController,
         builder: (context, _) {
@@ -152,50 +122,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       ),
     );
   }
-
-  void _onDragStart(DragStartDetails details) {
-    bool isDragOpenFromLeft = animationController.isDismissed &&
-        details.globalPosition.dx < minDragStartEdge;
-    bool isDragCloseFromRight = animationController.isCompleted &&
-        details.globalPosition.dx > maxDragStartEdge;
-
-    _canBeDragged = isDragOpenFromLeft || isDragCloseFromRight;
-  }
-
-  void _onDragUpdate(DragUpdateDetails details) {
-    if (_canBeDragged) {
-      double delta = details.primaryDelta / maxSlide;
-      animationController.value += delta;
-    }
-  }
-
-  void _onDragEnd(DragEndDetails details) {
-    //I have no idea what it means, copied from Drawer
-    double _kMinFlingVelocity = 365.0;
-
-    if (animationController.isDismissed || animationController.isCompleted) {
-      return;
-    }
-    if (details.velocity.pixelsPerSecond.dx.abs() >= _kMinFlingVelocity) {
-      double visualVelocity = details.velocity.pixelsPerSecond.dx /
-          MediaQuery.of(context).size.width;
-
-      animationController.fling(velocity: visualVelocity);
-    } else if (animationController.value < 0.5) {
-      animationController.reverse();
-    } else {
-      animationController.forward();
-    }
-  }
 }
 
 class ProfileBody extends StatefulWidget {
   const ProfileBody({
     Key key,
-    this.teamsList,
   }) : super(key: key);
-
-  final List teamsList;
 
   @override
   _ProfileBodyState createState() => _ProfileBodyState();
@@ -211,7 +143,7 @@ class _ProfileBodyState extends State<ProfileBody> {
   void initState() {
     super.initState();
     Firebase.initializeApp().whenComplete(() {
-      print("completed");
+      print("profile body loaded");
       setState(() {});
     });
     sub = db
@@ -244,8 +176,8 @@ class _ProfileBodyState extends State<ProfileBody> {
                 child: TabBarView(
                   children: [
                     MainUserProfile(data: data),
-                    ProfileTeamsList(widget: widget),
                     ProfileFriendsList(),
+                    Schedule(),
                   ],
                 ),
               ),
@@ -418,70 +350,27 @@ class MainUserProfile extends StatelessWidget {
                   ),
                 ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(
-                      Feather.phone,
-                      size: 24.0,
+              if (data['phoneNumber']['show'])
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Feather.phone,
+                        size: 24.0,
+                      ),
                     ),
-                  ),
-                  Text(
-                    "+91 123456789",
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                ],
-              ),
+                    Text(
+                      data['phoneNumber']['ph'],
+                      style: Theme.of(context).textTheme.headline6,
+                    )
+                  ],
+                ),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class ProfileTeamsList extends StatefulWidget {
-  const ProfileTeamsList({
-    Key key,
-    @required this.widget,
-  }) : super(key: key);
-
-  final ProfileBody widget;
-
-  @override
-  _ProfileTeamsListState createState() => _ProfileTeamsListState();
-}
-
-class _ProfileTeamsListState extends State<ProfileTeamsList> {
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(20)),
-            ),
-            shadowColor: Color(0x44393e46),
-            elevation: 20,
-            child: Container(
-              height: 80,
-              child: Center(
-                child: ListTile(
-                  title: Text(
-                    widget.widget.teamsList[index],
-                    style: Theme.of(context).textTheme.headline5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      itemCount: widget.widget.teamsList.length,
     );
   }
 }
@@ -512,7 +401,8 @@ class _ProfileFriendsListState extends State<ProfileFriendsList> {
     UserService().getFriends().then((snapshots) {
       setState(() {
         userFriend = snapshots;
-        print("we got the data + ${userFriend.toString()} ");
+        // print("we got the data + ${userFriend.toString()} ");
+        print("we got the data for friends list ");
       });
     });
   }
@@ -521,7 +411,7 @@ class _ProfileFriendsListState extends State<ProfileFriendsList> {
     return StreamBuilder(
       stream: userFriend,
       builder: (context, asyncSnapshot) {
-        print("Working");
+        print("friends list is loading");
         return asyncSnapshot.hasData
             ? asyncSnapshot.data.documents.length > 0
                 ? ListView.builder(
@@ -529,10 +419,12 @@ class _ProfileFriendsListState extends State<ProfileFriendsList> {
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return SingleFriendCard(
-                          imageLink: asyncSnapshot.data.documents[index]
-                              .get('profileImage'),
-                          name:
-                              asyncSnapshot.data.documents[index].get('name'));
+                        imageLink: asyncSnapshot.data.documents[index]
+                            .get('profileImage'),
+                        name: asyncSnapshot.data.documents[index].get('name'),
+                        userId:
+                            asyncSnapshot.data.documents[index].get('friendId'),
+                      );
                     })
                 : //if you have no friends you will get this illustration
                 Container(
@@ -695,7 +587,7 @@ class UserSearch extends SearchDelegate<ListView> {
     return StreamBuilder(
         stream: getUserFeed(query),
         builder: (context, asyncSnapshot) {
-          print("Working");
+          print("suggestions are loading");
           return asyncSnapshot.hasData
               ? ListView.builder(
                   itemCount: asyncSnapshot.data.documents.length,
@@ -758,29 +650,3 @@ class UserSearch extends SearchDelegate<ListView> {
 /*
 Text Spanning can be used to give user a feeling of auto completion
 */
-
-// class Tabs extends StatelessWidget {
-//   const Tabs({
-//     Key key,
-//   }) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return PreferredSize(
-//       preferredSize: Size.fromHeight(50.0),
-//       child: TabBar(
-//         labelColor: Colors.white,
-//         unselectedLabelColor: Colors.grey,
-//         tabs: [
-//           Tab(child: Text("Teams")),
-//           Tab(child: Text("Friends")),
-//         ],
-//         indicator: new BubbleTabIndicator(
-//           indicatorHeight: 30.0,
-//           indicatorColor: Theme.of(context).primaryColor,
-//           tabBarIndicatorSize: TabBarIndicatorSize.tab,
-//         ),
-//       ),
-//     );
-//   }
-// }

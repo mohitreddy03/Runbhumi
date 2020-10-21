@@ -1,5 +1,8 @@
+import 'package:Runbhumi/services/NotificationService.dart';
+import 'package:Runbhumi/view/otherUserProfile.dart';
 import 'package:Runbhumi/widget/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:Runbhumi/models/Notification.dart';
 
 class Notifications extends StatefulWidget {
   @override
@@ -7,19 +10,112 @@ class Notifications extends StatefulWidget {
 }
 
 class _NotificationsState extends State<Notifications> {
-  Widget _buildTitle(BuildContext context) {
-    return new Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: new Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'Notifications',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 25),
-          ),
-        ],
-      ),
+  Stream notification;
+
+  void initState() {
+    super.initState();
+    getUserNotifications();
+  }
+
+  getUserNotifications() async {
+    NotificationServices().getNotification().then((snapshots) {
+      setState(() {
+        notification = snapshots;
+        print("we got the data");
+      });
+    });
+  }
+
+  Widget notificationList() {
+    return StreamBuilder(
+      stream: notification,
+      builder: (context, asyncSnapshot) {
+        print("Working " + asyncSnapshot.hasData.toString());
+        return asyncSnapshot.hasData
+            ? ListView.builder(
+                itemCount: asyncSnapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  NotificationClass notificationData =
+                      new NotificationClass.fromJson(
+                          asyncSnapshot.data.documents[index]);
+
+                  // String notificationId = data.get('notificationId');
+                  // String id = data.get('senderId');
+                  // String profileImage = data.get("profileImage");
+                  // String name = data.get("name");
+                  return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 4.0),
+                      child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OtherUserProfile(
+                                  // userID:
+                                  //     Constants.prefs.getString('userId'),
+                                  // TODO: I need this feild in DB
+                                  userID: notificationData.senderId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                              shadowColor: Color(0x44393e46),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20)),
+                              ),
+                              elevation: 20,
+                              child: Column(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(20)),
+                                    child: Image(
+                                        height: 75,
+                                        image: NetworkImage(notificationData
+                                            .senderProfieImage)),
+                                  ),
+                                  Text(notificationData.senderName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline5),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SmallButton(
+                                        myText: "decline",
+                                        myColor: Theme.of(context).accentColor,
+                                        //decline funtionality
+                                        onPressed: () {
+                                          NotificationServices().declineRequest(
+                                              notificationData.notificationId);
+                                        },
+                                      ),
+                                      SmallButton(
+                                        myText: "accept",
+                                        myColor: Theme.of(context).primaryColor,
+                                        //aceept friend funtionality
+                                        onPressed: () {
+                                          NotificationServices()
+                                              .acceptFriendRequest(
+                                                  notificationData);
+                                          // notificationId,
+                                          // id,
+                                          // name,
+                                          // profileImage);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ))));
+                },
+              )
+            : Loader();
+      },
     );
   }
 
@@ -27,30 +123,20 @@ class _NotificationsState extends State<Notifications> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _buildTitle(context),
+        title: buildTitle(context, "Notifications"),
         automaticallyImplyLeading: false,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-            child: Text(
-              'Friend requests',
-              style: Theme.of(context).textTheme.headline6,
+          Container(
+            height: 200,
+            child: Stack(
+              children: <Widget>[
+                notificationList(),
+              ],
             ),
           ),
-          Expanded(child: PlaceholderWidget()),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-            child: Text(
-              'Team join requests',
-              style: Theme.of(context).textTheme.headline6,
-            ),
-          ),
-          Expanded(child: PlaceholderWidget()),
         ],
       ),
     );

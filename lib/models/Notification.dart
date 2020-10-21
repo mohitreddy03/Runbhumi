@@ -50,18 +50,22 @@
 //         status = snapshot.data()['status'];
 // }
 
-class FriendRequestNotification {
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class NotificationClass {
   String senderId;
   String senderName;
   String senderProfieImage;
   String notificationId;
+  String type;
 
-  FriendRequestNotification.createNewRequest(String nortificationId,
+  NotificationClass.createNewRequest(String type, String nortificationId,
       String senderId, String senderName, String senderProfileImage) {
     this.notificationId = nortificationId;
     this.senderId = senderId;
     this.senderName = senderName;
     this.senderProfieImage = senderProfileImage;
+    this.type = type;
   }
 
   Map<String, dynamic> toJson() => {
@@ -69,5 +73,23 @@ class FriendRequestNotification {
         'senderId': senderId,
         'name': senderName,
         'profileImage': senderProfieImage,
+        'type': type
       };
+
+  NotificationClass(
+      {this.notificationId,
+      this.senderId,
+      this.senderName,
+      this.senderProfieImage,
+      this.type});
+
+  factory NotificationClass.fromJson(QueryDocumentSnapshot data) {
+    var parsedJson = data.data();
+    return NotificationClass(
+        notificationId: parsedJson['notificationId'],
+        senderId: parsedJson['senderId'],
+        senderName: parsedJson['name'],
+        senderProfieImage: parsedJson['profileImage'],
+        type: parsedJson['type']);
+  }
 }
