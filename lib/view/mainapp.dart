@@ -1,6 +1,8 @@
+import 'package:Runbhumi/widget/showOffline.dart';
 import 'package:flutter/material.dart';
 import 'views.dart';
 import '../widget/widgets.dart';
+import 'package:connectivity_widget/connectivity_widget.dart';
 /*
   this has the bottom navigation bar of the app
 */
@@ -10,25 +12,23 @@ class MainApp extends StatefulWidget {
   _MainAppState createState() => _MainAppState();
 }
 
-// GlobalKey<NavigatorState> _pageNavigatorKey = GlobalKey<NavigatorState>();
-
 class _MainAppState extends State<MainApp> {
-  int currentIndex = 0;
-  final PageController pageController = PageController();
+  int _currentIndex = 0;
+  final PageController _pageController = PageController();
   //add widgets of all relevant screens here
   final List<Widget> _children = [
     Home(),
     Network(),
-    // AddPost(),
+    TeamsList(),
     Notifications(),
     Profile(),
   ];
 
   void onTabTapped(int index) {
     setState(() {
-      currentIndex = index;
+      _currentIndex = index;
     });
-    pageController.animateToPage(index,
+    _pageController.animateToPage(index,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic);
   }
@@ -37,19 +37,22 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageView.builder(
-        controller: pageController,
+        controller: _pageController,
+        itemCount: 5,
         itemBuilder: (context, index) {
-          return _children[index];
+          return ConnectivityWidget(builder: (context, isOnline) {
+            return isOnline ? _children[index] : ShowOffline();
+          });
         },
         onPageChanged: (int index) {
           setState(() {
-            currentIndex = index;
+            _currentIndex = index;
           });
         },
       ),
       //bottom navbar
       bottomNavigationBar:
-          buildBottomNavigationBar(context, onTabTapped, currentIndex),
+          buildBottomNavigationBar(context, onTabTapped, _currentIndex),
     );
   }
 }

@@ -1,7 +1,9 @@
+import 'package:Runbhumi/models/message.dart';
 import 'package:Runbhumi/services/chatroomServices.dart';
 import 'package:Runbhumi/utils/Constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../views.dart';
 
 class Conversation extends StatefulWidget {
@@ -30,12 +32,13 @@ class _ConversationState extends State<Conversation> {
           DateTime.now(),
           Constants.prefs.getString('userId'),
           messageEditingController.text.trim(),
+          Constants.prefs.getString('name'),
           widget.chatRoomId);
       setState(() {
         messageEditingController.text = "";
+        _controller.jumpTo(_controller.position.minScrollExtent);
       });
     }
-    _controller.jumpTo(_controller.position.maxScrollExtent);
   }
 
   Widget chatMessages() {
@@ -45,14 +48,19 @@ class _ConversationState extends State<Conversation> {
       builder: (context, snapshot) {
         return snapshot.hasData
             ? ListView.builder(
+                reverse: true,
                 controller: _controller,
                 itemCount: snapshot.data.documents.length,
                 itemBuilder: (context, index) {
+                  Message data =
+                      new Message.fromJson(snapshot.data.documents[index]);
                   return MessageTile(
                     //decides who sent the message and accordingly aligns the text
-                    message: snapshot.data.documents[index].get('message'),
-                    sendByMe: Constants.prefs.getString('userId') ==
-                        snapshot.data.documents[index].get('sentby'),
+                    message: data.message,
+                    sendByMe:
+                        Constants.prefs.getString('userId') == data.sentby,
+                    sentByName: data.sentByName,
+                    dateTime: data.dateTime,
                   );
                 })
             : Center(
@@ -73,7 +81,7 @@ class _ConversationState extends State<Conversation> {
     });
     super.initState();
     Future.delayed(Duration(milliseconds: 400), () {
-      _controller.jumpTo(_controller.position.maxScrollExtent);
+      _controller.jumpTo(_controller.position.minScrollExtent);
     });
   }
 
@@ -88,19 +96,35 @@ class _ConversationState extends State<Conversation> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(20.0),
                 child: Image(
-                    height: 40,
-                    image: NetworkImage(
-                      Constants.prefs.getString('name') == widget.usersNames[0]
-                          ? widget.usersPics[0]
-                          : widget.usersPics[1],
-                    )),
+                  fit: BoxFit.fitWidth,
+                  height: 32,
+                  image: NetworkImage(
+                    Constants.prefs.getString('name') == widget.usersNames[0]
+                        ? widget.usersPics[0]
+                        : widget.usersPics[1],
+                  ),
+                ),
               ),
               SizedBox(
                 width: 8,
               ),
               Constants.prefs.getString('name') == widget.usersNames[0]
-                  ? Text(widget.usersNames[1])
-                  : Text(widget.usersNames[0]),
+                  ? Text(
+                      widget.usersNames[1],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).backgroundColor,
+                      ),
+                    )
+                  : Text(
+                      widget.usersNames[0],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).backgroundColor,
+                      ),
+                    ),
             ],
           ),
         ),
@@ -108,13 +132,15 @@ class _ConversationState extends State<Conversation> {
           GestureDetector(
             onTap: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => ChatSchedule(
-                          chatRoomId: widget.chatRoomId,
-                          usersNames: widget.usersNames,
-                          users: widget.users,
-                          usersPics: widget.usersPics)));
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatSchedule(
+                    chatRoomId: widget.chatRoomId,
+                    usersNames: widget.usersNames,
+                    users: widget.users,
+                  ),
+                ),
+              );
             },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 20),
@@ -126,7 +152,10 @@ class _ConversationState extends State<Conversation> {
       body: Container(
         child: Stack(
           children: [
-            chatMessages(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 70.0),
+              child: chatMessages(),
+            ),
             SizedBox(
               height: 20,
             ),
@@ -138,20 +167,22 @@ class _ConversationState extends State<Conversation> {
                 child: Row(
                   children: [
                     Expanded(
-                        child: TextField(
-                      onTap: () {
-                        _controller
-                            .jumpTo(_controller.position.maxScrollExtent);
-                      },
-                      controller: messageEditingController,
-                      decoration: InputDecoration(
+                      child: TextField(
+                        onTap: () {
+                          _controller
+                              .jumpTo(_controller.position.minScrollExtent);
+                        },
+                        controller: messageEditingController,
+                        decoration: InputDecoration(
                           hintText: "Message ...",
                           hintStyle: TextStyle(
                             color: Colors.grey,
-                            fontSize: 16,
+                            fontSize: 14,
                           ),
-                          border: InputBorder.none),
-                    )),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
                     SizedBox(
                       width: 8,
                     ),
@@ -182,41 +213,102 @@ class _ConversationState extends State<Conversation> {
 
 class MessageTile extends StatelessWidget {
   final String message;
-  final bool sendByMe;
   //sendByMe boolean to check if the currentuser sent the message before.
+  final bool sendByMe;
+  final String sentByName; //Sent By (Unused till now)
+  final DateTime dateTime;
 
-  MessageTile({@required this.message, @required this.sendByMe});
+  MessageTile({
+    @required this.message,
+    @required this.sendByMe,
+    @required this.sentByName,
+    @required this.dateTime,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(
-          top: 8, bottom: 8, left: sendByMe ? 0 : 24, right: sendByMe ? 24 : 0),
+      // these are margins which go around each message tile
+      margin: EdgeInsets.only(
+        top: 4,
+        bottom: 4,
+        left: sendByMe ? 48 : 0,
+        right: sendByMe ? 0 : 48,
+      ),
+      //alignment of the message tile
       alignment: sendByMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin:
-            sendByMe ? EdgeInsets.only(left: 30) : EdgeInsets.only(right: 30),
-        padding: EdgeInsets.only(top: 17, bottom: 17, left: 20, right: 20),
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           borderRadius: sendByMe
               ? BorderRadius.only(
-                  topLeft: Radius.circular(23),
-                  topRight: Radius.circular(23),
-                  bottomLeft: Radius.circular(23))
+                  topLeft: Radius.circular(24), bottomLeft: Radius.circular(24))
               : BorderRadius.only(
-                  topLeft: Radius.circular(23),
-                  topRight: Radius.circular(23),
-                  bottomRight: Radius.circular(23)),
+                  topRight: Radius.circular(24),
+                  bottomRight: Radius.circular(24)),
           color: sendByMe
-              ? Color(0xff393e46).withOpacity(0.8)
-              : Color(0xff00adb5).withOpacity(0.8),
+              ? Color(0xff004E52).withOpacity(0.9)
+              : Theme.of(context).primaryColor.withOpacity(0.9),
         ),
-        child: Text(message,
-            textAlign: TextAlign.start,
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w400)),
+        child: sendByMe
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Text(
+                      DateFormat().add_jm().format(dateTime).toString(),
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Text(
+                      DateFormat().add_jm().format(dateTime).toString(),
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

@@ -8,6 +8,8 @@ BottomNavigationBar buildBottomNavigationBar(
     type: BottomNavigationBarType.fixed,
     currentIndex: currentIndex,
     showUnselectedLabels: false,
+    selectedFontSize: 13,
+    selectedItemColor: Theme.of(context).primaryColor,
     unselectedItemColor: Theme.of(context).primaryColor.withOpacity(0.5),
     items: [
       new BottomNavigationBarItem(
@@ -20,11 +22,11 @@ BottomNavigationBar buildBottomNavigationBar(
         activeIcon: Icon(Feather.message_square),
         label: 'Message',
       ),
-      // new BottomNavigationBarItem(
-      //   icon: Icon(Feather.plus_circle),
-      //   activeIcon: Icon(Feather.plus_circle),
-      //   label: 'Add Post',
-      // ),
+      new BottomNavigationBarItem(
+        icon: Icon(Feather.users),
+        activeIcon: Icon(Feather.users),
+        label: 'Teams',
+      ),
       new BottomNavigationBarItem(
         icon: Icon(Feather.bell),
         activeIcon: Icon(Feather.bell),

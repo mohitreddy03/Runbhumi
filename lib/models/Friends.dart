@@ -11,14 +11,14 @@ class Friends {
     this.profileImage = profileImage;
   }
   Map<String, dynamic> toJson() =>
-      {'friendId': friendId, 'name': name, 'profileImage': profileImage};
+      {'id': friendId, 'name': name, 'profileImage': profileImage};
 
   Friends({this.friendId, this.name, this.profileImage});
 
   factory Friends.fromJson(QueryDocumentSnapshot data) {
     var parsedJson = data.data();
     return Friends(
-        friendId: parsedJson['senderId'],
+        friendId: parsedJson['id'],
         name: parsedJson['name'],
         profileImage: parsedJson['profileImage']);
   }

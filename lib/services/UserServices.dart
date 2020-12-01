@@ -4,32 +4,44 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  updateEventCount() {
+  updateEventCount(int n) {
     FirebaseFirestore.instance
         .collection('users')
         .doc(Constants.prefs.get('userId'))
-        .set({'eventCount': FieldValue.increment(1)}, SetOptions(merge: true));
+        .set({'eventCount': FieldValue.increment(n)}, SetOptions(merge: true));
   }
 
-  updateMyFriendCount() {
+  // updateMyFriendCount(int n) {
+  //   _db
+  //       .collection('users')
+  //       .doc(Constants.prefs.get('userId'))
+  //       .set({'friendCount': FieldValue.increment(n)}, SetOptions(merge: true));
+  // }
+
+  // addUpdateMyFriendCount(int n, String id, String currUser) {
+  //   print("Done");
+  //   _db.collection('users').doc(currUser).update({
+  //     'friendCount': FieldValue.increment(n),
+  //     'friends': FieldValue.arrayUnion([id])
+  //   });
+  // }
+
+  // removeFriend(int n,String id,String currUser){
+
+  // }
+
+  // updateFriendCount(String uid, int n) {
+  //   _db
+  //       .collection('users')
+  //       .doc(uid)
+  //       .set({'friendCount': FieldValue.increment(n)}, SetOptions(merge: true));
+  // }
+
+  updateTeamsCount(int n) {
     _db
         .collection('users')
         .doc(Constants.prefs.get('userId'))
-        .set({'friendCount': FieldValue.increment(1)}, SetOptions(merge: true));
-  }
-
-  updateFriendCount(String uid) {
-    _db
-        .collection('users')
-        .doc(uid)
-        .set({'friendCount': FieldValue.increment(1)}, SetOptions(merge: true));
-  }
-
-  updateTeamsCount() {
-    _db
-        .collection('users')
-        .doc(Constants.prefs.get('userId'))
-        .set({'teamsCount': FieldValue.increment(1)}, SetOptions(merge: true));
+        .set({'teamsCount': FieldValue.increment(n)}, SetOptions(merge: true));
   }
 
   Future<UserProfile> getUserProfile(String id) async {
@@ -52,4 +64,15 @@ class UserService {
         .snapshots()
         .map((snap) => UserProfile.fromMap(snap.data as Map));
   }
+
+  getTeams(String sport) async {
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(Constants.prefs.getString('userId'))
+        .collection("teams")
+        .where('sport', isEqualTo: sport)
+        .snapshots();
+  }
 }
+
+//data['friends'].contains(data['userId'])

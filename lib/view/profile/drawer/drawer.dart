@@ -1,4 +1,4 @@
-import 'package:Runbhumi/services/auth.dart';
+import 'package:Runbhumi/services/services.dart';
 import 'package:Runbhumi/utils/Constants.dart';
 import 'package:Runbhumi/utils/theme_config.dart';
 import 'package:Runbhumi/widget/widgets.dart';
@@ -26,13 +26,26 @@ class _DrawerBodyState extends State<DrawerBody> {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 0, 36),
           child: Container(
-            child: Text(
-              "Hello,\n" + Constants.prefs.getString('name'),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Hello,",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  Constants.prefs.getString('name'),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -46,11 +59,14 @@ class _DrawerBodyState extends State<DrawerBody> {
             color: Colors.white,
           ),
         ),
+        // only use for testing
         DrawerButton(
-          onpressed: () {},
-          label: "Create or Join Teams",
+          onpressed: () {
+            Navigator.pushNamed(context, "/testing");
+          },
+          label: "Testing",
           icon: Icon(
-            Feather.user_plus,
+            Feather.flag,
             color: Colors.white,
           ),
         ),

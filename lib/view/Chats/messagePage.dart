@@ -1,11 +1,16 @@
-import 'package:Runbhumi/services/chatroomServices.dart';
+import 'package:Runbhumi/models/models.dart';
+import 'package:Runbhumi/services/services.dart';
 import 'package:Runbhumi/utils/Constants.dart';
+import 'package:Runbhumi/utils/theme_config.dart';
 import 'package:Runbhumi/view/Chats/conversation.dart';
+import 'package:Runbhumi/view/Chats/teamConversation.dart';
 import 'package:bubble_tab_indicator/bubble_tab_indicator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:provider/provider.dart';
 import '../../widget/widgets.dart';
+import 'eventConversation.dart';
 
 /*
   Code For Message Page
@@ -30,7 +35,7 @@ class _NetworkState extends State<Network> {
             tabs: [
               Tab(child: Text("Direct")),
               Tab(child: Text("Team")),
-              Tab(child: Text("B/W Teams")),
+              Tab(child: Text("Events")),
             ],
             indicator: new BubbleTabIndicator(
               indicatorHeight: 30.0,
@@ -43,34 +48,192 @@ class _NetworkState extends State<Network> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // ChatsTabs(),
+              // Expanded(child: DirectChats()),
               Expanded(
                 child: TabBarView(
                   children: [
                     //direct chats
                     DirectChats(),
                     //teams chat
-                    PlaceholderWidget(),
+                    TeamChats(),
                     // b/w teams chat
-                    PlaceholderWidget(),
+                    EventChats(),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () {
-        //     Navigator.pushNamed(context, "/addpost");
-        //   },
-        //   child: Icon(Icons.add),
-        //   foregroundColor: Colors.white,
-        //   shape: RoundedRectangleBorder(
-        //     borderRadius: BorderRadius.all(Radius.circular(20)),
-        //   ),
-        //   backgroundColor: Theme.of(context).primaryColor,
-        // ),
       ),
+    );
+  }
+}
+
+class EventChats extends StatefulWidget {
+  @override
+  _EventChatsState createState() => _EventChatsState();
+}
+
+class _EventChatsState extends State<EventChats> {
+  Stream userEventChats;
+  @override
+  void initState() {
+    getEventChats();
+    super.initState();
+  }
+
+  getEventChats() async {
+    EventService().getCurrentUserEventChats().then((snapshots) {
+      setState(() {
+        userEventChats = snapshots;
+        print("we got the data user Event chats");
+      });
+    });
+  }
+
+  Widget getEventsFeed() {
+    return StreamBuilder(
+      stream: userEventChats,
+      builder: (context, asyncSnapshot) {
+        print("user Event chats list is loading");
+        if (asyncSnapshot.hasData) {
+          print("user Event chats list got loaded");
+          if (asyncSnapshot.data.documents.length > 0) {
+            return ListView.builder(
+                itemCount: asyncSnapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  print('I am here');
+                  Events data =
+                      new Events.fromJson(asyncSnapshot.data.documents[index]);
+                  print('I am here2');
+                  return Card(
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EventConversation(
+                                data: data,
+                              ),
+                            ));
+                        //Go to the team ChatRoom
+                      },
+                      title: Text(data.eventName),
+                      subtitle: Text(data.description),
+                    ),
+                  );
+                });
+          } else {
+            return Container(
+              child: Center(
+                child: Image.asset("assets/add-friends.png"),
+              ),
+            );
+          }
+        } else {
+          return Loader();
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: getEventsFeed());
+  }
+}
+
+class TeamChats extends StatefulWidget {
+  @override
+  _TeamChatsState createState() => _TeamChatsState();
+}
+
+class _TeamChatsState extends State<TeamChats> {
+  Stream userTeamChats;
+  @override
+  void initState() {
+    getTeamChats();
+    super.initState();
+  }
+
+  getTeamChats() async {
+    TeamService().getTeamsChatRoom().then((snapshots) {
+      setState(() {
+        userTeamChats = snapshots;
+        print("we got the data user Team chats");
+      });
+    });
+  }
+
+  Widget getTeamsFeed() {
+    return StreamBuilder(
+      stream: userTeamChats,
+      builder: (context, asyncSnapshot) {
+        print("user team chats list is loading⌚");
+        if (asyncSnapshot.hasData) {
+          print("user team chats list got loaded😀");
+          if (asyncSnapshot.data.documents.length > 0) {
+            return ListView.builder(
+                itemCount: asyncSnapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  Teams data =
+                      new Teams.fromJson(asyncSnapshot.data.documents[index]);
+                  print(data.bio);
+                  String sportIcon;
+                  // IconData sportIcon;
+                  switch (data.sport) {
+                    case "Volleyball":
+                      sportIcon = "assets/icons8-volleyball-96.png";
+                      break;
+                    case "Basketball":
+                      // sportIcon = Icons.sports_basketball;
+                      sportIcon = "assets/icons8-basketball-96.png";
+                      break;
+                    case "Cricket":
+                      sportIcon = "assets/icons8-cricket-96.png";
+                      break;
+                    case "Football":
+                      sportIcon = "assets/icons8-soccer-ball-96.png";
+                      break;
+                  }
+                  return Card(
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TeamConversation(
+                                data: data,
+                              ),
+                            ));
+                        //Go to the team ChatRoom
+                      },
+                      leading: Image.asset(sportIcon),
+                      title: Text(data.teamName),
+                      subtitle: Text(data.bio),
+                    ),
+                  );
+                });
+          } else {
+            return Container(
+              child: Center(
+                child: Image.asset("assets/add-friends.png"),
+              ),
+            );
+          }
+        } else {
+          return Loader();
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: getTeamsFeed(),
     );
   }
 }
@@ -98,12 +261,10 @@ class _DirectChatsState extends State<DirectChats> {
   }
 
   getUserChats() async {
-    print("got here");
     ChatroomService().getUsersDirectChats().then((snapshots) {
       setState(() {
-        print("got here");
         userDirectChats = snapshots;
-        print("we got the data");
+        print("we got the data for user direct chats");
       });
     });
   }
@@ -113,85 +274,83 @@ class _DirectChatsState extends State<DirectChats> {
       stream: userDirectChats,
       builder: (context, asyncSnapshot) {
         print("Working");
-        return asyncSnapshot.hasData
-            ? asyncSnapshot.data.documents.length > 0
-                ? ListView.builder(
-                    itemCount: asyncSnapshot.data.documents.length,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Card(
-                          shadowColor: Color(0x44393e46),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          elevation: 20,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: ListTile(
-                              onTap: () {
-                                //Sending the user to the chat room
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Conversation(
-                                        chatRoomId: asyncSnapshot
-                                            .data.documents[index]
-                                            .get('chatRoomId'),
-                                        usersNames: asyncSnapshot
-                                            .data.documents[index]
-                                            .get('usersNames'),
-                                        users: asyncSnapshot
-                                            .data.documents[index]
-                                            .get('users'),
-                                        usersPics: asyncSnapshot
-                                            .data.documents[index]
-                                            .get('usersPics')),
-                                  ),
-                                );
-                              },
-                              title: Constants.prefs.getString('name') ==
-                                      asyncSnapshot.data.documents[index]
-                                          .get('usersNames')[0]
-                                  ? Text(
-                                      asyncSnapshot.data.documents[index]
-                                          .get('usersNames')[1],
-                                      style: TextStyle(fontSize: 20),
-                                    )
-                                  : Text(
-                                      asyncSnapshot.data.documents[index]
-                                          .get('usersNames')[0],
-                                      style: TextStyle(fontSize: 20),
-                                    ),
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(20.0),
-                                child: Image(
-                                  image: NetworkImage(
-                                    Constants.prefs.getString('profileImage') ==
-                                            asyncSnapshot.data.documents[index]
-                                                .get('usersPics')[0]
-                                        ? asyncSnapshot.data.documents[index]
-                                            .get('usersPics')[1]
-                                        : asyncSnapshot.data.documents[index]
-                                            .get('usersPics')[0],
-                                  ),
-                                ),
+        if (asyncSnapshot.hasData) {
+          if (asyncSnapshot.data.documents.length > 0) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: ListView.builder(
+                itemCount: asyncSnapshot.data.documents.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        onTap: () {
+                          //Sending the user to the chat room
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Conversation(
+                                  chatRoomId: asyncSnapshot
+                                      .data.documents[index]
+                                      .get('chatRoomId'),
+                                  usersNames: asyncSnapshot
+                                      .data.documents[index]
+                                      .get('usersNames'),
+                                  users: asyncSnapshot.data.documents[index]
+                                      .get('users'),
+                                  usersPics: asyncSnapshot.data.documents[index]
+                                      .get('usersPics')),
+                            ),
+                          );
+                        },
+                        title: Constants.prefs.getString('name') ==
+                                asyncSnapshot.data.documents[index]
+                                    .get('usersNames')[0]
+                            ? Text(
+                                asyncSnapshot.data.documents[index]
+                                    .get('usersNames')[1],
+                                style: TextStyle(fontSize: 18),
+                              )
+                            : Text(
+                                asyncSnapshot.data.documents[index]
+                                    .get('usersNames')[0],
+                                style: TextStyle(fontSize: 18),
                               ),
-                              // trailing: Icon(Icons.send),
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(20.0),
+                          child: Image(
+                            width: 48,
+                            height: 48,
+                            image: NetworkImage(
+                              Constants.prefs.getString('profileImage') ==
+                                      asyncSnapshot.data.documents[index]
+                                          .get('usersPics')[0]
+                                  ? asyncSnapshot.data.documents[index]
+                                      .get('usersPics')[1]
+                                  : asyncSnapshot.data.documents[index]
+                                      .get('usersPics')[0],
                             ),
                           ),
                         ),
-                      );
-                    },
-                  )
-                : //if you have no friends you will get this illustration
-                Container(
-                    child: Center(
-                      child: Image.asset("assets/add-friends.png"),
+                      ),
                     ),
-                  )
-            : Loader();
+                  );
+                },
+              ),
+            );
+          } else {
+            return Container(
+              child: Center(
+                child: Image.asset("assets/add-friends.png"),
+              ),
+            );
+          }
+        } else {
+          return Loader();
+        }
       },
     );
   }
@@ -209,29 +368,39 @@ class _DirectChatsState extends State<DirectChats> {
         children: [
           Padding(
             padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-            child: Container(
-              child: TextField(
-                onTap: () {
-                  showSearch(context: context, delegate: UserSearchDirect());
-                },
-                controller: friendsSearch,
-                decoration: const InputDecoration(
-                  hintText: 'Search friends...',
-                  border: InputBorder.none,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                    borderSide: BorderSide(color: Color(00000000)),
-                  ),
-                  prefixIcon: Icon(Feather.search),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                    borderSide: BorderSide(color: Color(00000000)),
-                  ),
-                  hintStyle: const TextStyle(color: Colors.grey),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                showSearch(context: context, delegate: UserSearchDirect());
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
+                  borderRadius: BorderRadius.circular(40),
                 ),
-                style: const TextStyle(fontSize: 16.0),
-                onChanged: updateSearchQuery,
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      Feather.search,
+                      color: Theme.of(context).iconTheme.color.withOpacity(0.5),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      "Search",
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .inputDecorationTheme
+                            .hintStyle
+                            .color,
+                        fontSize: 16,
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
           ),
@@ -263,6 +432,15 @@ class UserSearchDirect extends SearchDelegate<ListView> {
         .where("userSearchParam", arrayContains: query)
         .limit(5)
         .snapshots();
+  }
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Provider.of<ThemeNotifier>(context);
+    return ThemeData(
+      primaryColor: theme.currentTheme.appBarTheme.color,
+      appBarTheme: theme.currentTheme.appBarTheme,
+    );
   }
 
   @override
@@ -304,11 +482,6 @@ class UserSearchDirect extends SearchDelegate<ListView> {
                       child: GestureDetector(
                         onTap: () {},
                         child: Card(
-                          shadowColor: Color(0x44393e46),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          elevation: 20,
                           child: ListTile(
                             leading: ClipRRect(
                               borderRadius: BorderRadius.circular(20.0),
@@ -411,26 +584,25 @@ class UserSearchDirect extends SearchDelegate<ListView> {
                                   .get('profileImage'));
                         },
                         child: Card(
-                          shadowColor: Color(0x44393e46),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          elevation: 20,
-                          child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(20.0),
-                              child: Image(
-                                image: NetworkImage(asyncSnapshot
-                                    .data.documents[index]
-                                    .get('profileImage')
-                                    .toString()),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.all(0),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(20.0),
+                                child: Image(
+                                  image: NetworkImage(asyncSnapshot
+                                      .data.documents[index]
+                                      .get('profileImage')
+                                      .toString()),
+                                ),
                               ),
-                            ),
-                            title: Text(asyncSnapshot.data.documents[index]
-                                .get('name')),
-                            subtitle: Text(
-                              asyncSnapshot.data.documents[index]
-                                  .get('username'),
+                              title: Text(asyncSnapshot.data.documents[index]
+                                  .get('name')),
+                              subtitle: Text(
+                                asyncSnapshot.data.documents[index]
+                                    .get('username'),
+                              ),
                             ),
                           ),
                         ),
@@ -448,46 +620,3 @@ class UserSearchDirect extends SearchDelegate<ListView> {
     // throw UnimplementedError();
   }
 }
-
-// class ChatsTabs extends StatelessWidget {
-//   const ChatsTabs({
-//     Key key,
-//   }) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Color(0x29000000),
-//             blurRadius: 6,
-//             offset: Offset(0, -1),
-//           ),
-//         ],
-//         borderRadius: BorderRadius.only(
-//           topLeft: Radius.circular(20),
-//           topRight: Radius.circular(20),
-//         ),
-//       ),
-//       child: PreferredSize(
-//         preferredSize: Size.fromHeight(50.0),
-//         child: TabBar(
-//           labelColor: Colors.white,
-//           unselectedLabelColor: Colors.grey,
-//           tabs: [
-//             Tab(child: Text("Direct")),
-//             Tab(child: Text("Team")),
-//             Tab(child: Text("B/W Teams")),
-//           ],
-//           indicator: new BubbleTabIndicator(
-//             indicatorHeight: 30.0,
-//             indicatorColor: Theme.of(context).primaryColor,
-//             tabBarIndicatorSize: TabBarIndicatorSize.tab,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

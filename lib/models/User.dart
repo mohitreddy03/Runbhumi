@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserProfile {
   String userId;
   String username;
@@ -12,6 +14,7 @@ class UserProfile {
   Map<String, dynamic> phoneNumber;
   List<String> userSearchIndex;
   String emailId;
+  List friends;
 
   UserProfile(
       {this.userId,
@@ -22,7 +25,8 @@ class UserProfile {
       this.phoneNumber,
       this.emailId,
       this.bio,
-      this.age});
+      this.age,
+      this.friends});
 
   UserProfile.loadUser(this.userId, this.username, this.name, this.profileImage,
       this.location, this.phoneNumber, this.emailId, this.bio, this.age);
@@ -41,6 +45,7 @@ class UserProfile {
     this.friendCount = 0;
     this.teamsCount = 0;
     this.eventCount = 0;
+    this.friends = [];
   }
 
   UserProfile.miniView(String userId, String name, String profileImage) {
@@ -65,7 +70,9 @@ class UserProfile {
         'friendCount': friendCount,
         'teamsCount': teamsCount,
         'eventCount': eventCount,
-        "userSearchParam": setSearchParam(username)
+        "userSearchParam": setSearchParam(username),
+        "friends": friends,
+        "notification": [],
       };
 
   factory UserProfile.fromMap(Map data) {
@@ -77,6 +84,18 @@ class UserProfile {
         location: data['location'] ?? "",
         phoneNumber: data['phoneNumber'] ?? "",
         emailId: data['emailId'] ?? "");
+  }
+
+  factory UserProfile.fromJson(QueryDocumentSnapshot snapshot) {
+    var data = snapshot.data();
+    return UserProfile(
+        userId: data['userId'],
+        username: data['username'],
+        name: data['name'],
+        profileImage: data['profileImage'],
+        location: data['location'],
+        phoneNumber: data['phoneNumber'],
+        emailId: data['emailId']);
   }
 }
 
